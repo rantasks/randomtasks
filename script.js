@@ -9,34 +9,34 @@ let cards = []; // массив DOM-элементов карт
 let isRunning = false;
 
 // =====================
-// создаём DOM-карты
+// создаём DOM-карты (сначала очищаем, если нужно)
 // =====================
 function createBoard(){
-  cardsRoot.innerHTML = '';
-  cards = [];
+  // Проверяем, есть ли еще карточки
+  if (cards.length === 0) {
+    tasks.forEach((task, idx) => {
+      const card = document.createElement('div');
+      card.className = 'card';
+      card.dataset.task = task;
 
-  tasks.forEach((task, idx) => {
-    const card = document.createElement('div');
-    card.className = 'card';
-    card.dataset.task = task;
+      const inner = document.createElement('div');
+      inner.className = 'card-inner';
 
-    const inner = document.createElement('div');
-    inner.className = 'card-inner';
+      const front = document.createElement('div');
+      front.className = 'card-face front';
+      front.textContent = idx + 1;
 
-    const front = document.createElement('div');
-    front.className = 'card-face front';
-    front.textContent = idx + 1;
+      const back = document.createElement('div');
+      back.className = 'card-face back';
+      back.textContent = task;
 
-    const back = document.createElement('div');
-    back.className = 'card-face back';
-    back.textContent = task;
-
-    inner.appendChild(front);
-    inner.appendChild(back);
-    card.appendChild(inner);
-    cardsRoot.appendChild(card);
-    cards.push(card);
-  });
+      inner.appendChild(front);
+      inner.appendChild(back);
+      card.appendChild(inner);
+      cardsRoot.appendChild(card);
+      cards.push(card);
+    });
+  }
 }
 
 // =====================
@@ -109,8 +109,9 @@ function showTaskModal(card){
       li.textContent = `${historyOl.children.length + 1}. ${card.dataset.task}`;
       historyOl.prepend(li);
 
+      // Удаляем карту
       const idx = cards.indexOf(card);
-      if(idx !== -1) cards.splice(idx,1);
+      if(idx !== -1) cards.splice(idx, 1);
       card.remove();
 
       overlay.remove();
@@ -133,8 +134,9 @@ shuffleBtn.addEventListener('click', async () => {
   if(isRunning) return;
   if(cards.length === 0){
     alert('Карт больше нет — все задания использованы.');
-    return;
+    createBoard(); // восстанавливаем карты, если их нет
   }
+
   isRunning = true;
   shuffleBtn.disabled = true;
 
@@ -153,11 +155,8 @@ shuffleBtn.addEventListener('click', async () => {
   isRunning = false;
 });
 
-// =====================
 // Инициализация доски
-// =====================
 createBoard();
-
 
 
 
