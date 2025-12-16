@@ -54,24 +54,21 @@ function setShuffleVars(card){
 */
 function cssShufflePhase(){
   return new Promise(resolve => {
-    // подготовка vars
-    cards.forEach(setShuffleVars);
-    // force reflow to ensure CSS vars applied
+    cards.forEach(c => {
+      setShuffleVars(c);
+      c.style.setProperty('--dur','1200ms'); // длиннее анимация
+    });
     void cardsRoot.offsetWidth;
-
-    // включаем анимацию у всех карт
     cards.forEach(c => c.classList.add('shuffle-phase'));
 
-    // слушаем конец — используем таймер чуть больше максимальной продолжительности
-    // (безопаснее, чем много слушателей на animationend)
-    const timeout = 1000;
+    const timeout = 1300; // чуть больше длительности
     setTimeout(()=>{
-      // выключаем класс
       cards.forEach(c => c.classList.remove('shuffle-phase'));
       resolve();
     }, timeout);
   });
 }
+
 
 /* Реальная перестановка — FLIPlike: запоминаем позиции, меняем порядок в DOM,
    считаем инверт и анимируем обратно к месту (чтобы не было резкого "перескакивания").
@@ -124,7 +121,6 @@ function doRealShuffle(){
 */
 function showTaskModal(card){
   return new Promise(resolve => {
-    // overlay
     const overlay = document.createElement('div');
     overlay.className = 'overlay';
 
@@ -133,9 +129,37 @@ function showTaskModal(card){
     modal.innerHTML = `
       <div class="task">${card.dataset.task}</div>
       <div class="row">
-        <button class="btn-ghost" id="cancelBtn">Отменить</button>
-        <button class="btn-confirm" id="confirmBtn">Удалить карту и закрыть</button>
+        <button class="btn-confirm" id="confirmBtn">Удалить и закрыть</button>
       </div>
+    `;
+    overlay.appendChild(modal);
+    document.body.appendChild(overlay);
+
+    const confirmBtn = modal.querySelector('#confirmBtn');
+    confirmBtn.onclick = () => {
+      // Добавляем в историю
+      const li = document.createElement('li');
+      li.textContent = `${historyOl.children.length + 1}. ${card.dataset.task}`;
+      historyOl.prepend(li);
+
+      // удаляем карту
+      const idx = cards.indexOf(card);
+      if(idx !== -1) cards.splice(idx,1);
+      card.remove();
+
+      overlay.remove();
+      resolve(true);
+    };
+
+    overlay.addEventListener('click', e=>{
+      if(e.target === overlay) {
+        overlay.remove();
+        resolve(false);
+      }
+    });
+  });
+}
+
     `;
 
     overlay.appendChild(modal);
