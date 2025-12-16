@@ -49,28 +49,36 @@ h1{font-size:28px;margin:0 0 6px}
 }
 
 /* КАРТА */
-.card{
+.card {
   height: 180px;
-  border-radius:18px;
-  perspective:1200px;
-  position:relative; /* важно для FLIP расчётов */
+  border-radius: 18px;
+  perspective: 1200px;       /* важно для flip */
+  position: relative;         /* важно для transform */
+  display: block;             /* обязательно */
   will-change: transform;
-  display:block;
 }
 
-.card-inner{
-  width:100%;
-  height:100%;
-  border-radius:18px;
-  background:var(--card);
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  text-align:center;
-  padding:16px;
-  transform-style:preserve-3d;
+.card-inner {
+  width: 100%;
+  height: 100%;
+  border-radius: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transform-style: preserve-3d; /* важно для flip */
   transition: transform 660ms cubic-bezier(.22,1,.36,1), box-shadow 360ms ease;
-  box-shadow: 0 8px 30px rgba(0,0,0,.45);
+  box-shadow: 0 8px 30px rgba(0,0,0,.25);
+}
+
+.card-face {
+  position: absolute;
+  inset: 0;
+  border-radius: 18px;
+  backface-visibility: hidden; /* важно для flip */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 18px;
 }
 
 /* стороны */
