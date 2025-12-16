@@ -1,6 +1,6 @@
 const cardsContainer = document.getElementById("cards");
-const history = document.getElementById("history");
 const shuffleBtn = document.getElementById("shuffleBtn");
+const history = document.getElementById("history");
 const scrollBtn = document.getElementById("scrollBtn");
 
 let available = [...Array(tasks.length).keys()];
@@ -23,36 +23,27 @@ shuffleBtn.onclick = () => {
 
   const cards = Array.from(document.querySelectorAll(".card"));
 
-  // фиксируем позиции
-  const positions = cards.map(card => card.getBoundingClientRect());
+  // FIRST — запоминаем позиции
+  const first = cards.map(card => card.getBoundingClientRect());
 
-  cards.forEach((card, i) => {
-    const rect = positions[i];
-    card.style.position = "absolute";
-    card.style.left = rect.left + "px";
-    card.style.top = rect.top + "px";
-    card.style.width = rect.width + "px";
-    card.style.height = rect.height + "px";
-  });
-
-  // очищаем контейнер
-  cardsContainer.innerHTML = "";
-
-  // перемешиваем массив
+  // реально перемешиваем порядок
   cards.sort(() => Math.random() - 0.5);
-
-  // добавляем обратно
   cards.forEach(card => cardsContainer.appendChild(card));
 
-  // анимация возврата
-  requestAnimationFrame(() => {
-    cards.forEach(card => {
-      card.style.transition = "all 1s cubic-bezier(.22,1,.36,1)";
-      card.style.position = "";
-      card.style.left = "";
-      card.style.top = "";
-      card.style.width = "";
-      card.style.height = "";
+  // LAST — новые позиции
+  const last = cards.map(card => card.getBoundingClientRect());
+
+  // INVERT + PLAY
+  cards.forEach((card, i) => {
+    const dx = first[i].left - last[i].left;
+    const dy = first[i].top - last[i].top;
+
+    card.style.transform = `translate(${dx}px, ${dy}px)`;
+    card.style.transition = "transform 0s";
+
+    requestAnimationFrame(() => {
+      card.style.transition = "transform 700ms cubic-bezier(.22,1,.36,1)";
+      card.style.transform = "";
     });
   });
 
@@ -62,18 +53,19 @@ shuffleBtn.onclick = () => {
   )[0];
 
   setTimeout(() => {
-    const winner = cards[index];
+    const winner = document.querySelectorAll(".card")[index];
     winner.classList.add("flip");
 
     const li = document.createElement("li");
     li.textContent = `${history.children.length + 1}. ${tasks[index]}`;
     history.appendChild(li);
-  }, 1100);
+  }, 800);
 };
 
 // прокрутка вниз
 scrollBtn.onclick = () => {
   history.scrollIntoView({ behavior: "smooth" });
 };
+
 
 
