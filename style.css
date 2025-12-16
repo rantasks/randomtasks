@@ -1,9 +1,11 @@
 :root{
-  --bg:#0b0b0d;
-  --card:#141418;
-  --accent:#d4af37;
-  --muted:#9aa0a6;
-  --gap:32px;
+  --bg: #1e1f29;
+  --card: #f5f5f5;
+  --card-gradient: linear-gradient(145deg,#ffffff,#e0e0e0);
+  --text: #1a1a1a;
+  --accent: #d4af37;
+  --muted: #aaaaaa;
+  --gap: 32px;
 }
 
 *{box-sizing:border-box}
@@ -23,21 +25,18 @@ header{margin-bottom:18px}
 h1{font-size:28px;margin:0 0 6px}
 .subtitle{color:var(--muted);margin:0 0 18px}
 
-/* Кнопка */
 .controls{display:flex;justify-content:center;margin-bottom:20px}
 .btn{
-  background:linear-gradient(180deg,var(--accent),#b78924);
-  color:#000;
-  border:none;
-  padding:14px 36px;
-  border-radius:12px;
-  font-weight:600;
-  cursor:pointer;
-  box-shadow:0 12px 30px rgba(212,175,55,.18);
+  background: var(--accent);
+  color: #000;
+  border-radius: 12px;
+  padding: 14px 36px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 12px 30px rgba(212,175,55,.18);
 }
 .btn:disabled{opacity:.5;cursor:not-allowed;transform:none;box-shadow:none}
 
-/* ПОЛЕ КАРТ: сетка с явными отступами */
 .cards{
   display:grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -48,95 +47,68 @@ h1{font-size:28px;margin:0 0 6px}
   border-radius:16px;
 }
 
-/* КАРТА */
-.card {
+.card{
   height: 180px;
-  border-radius: 18px;
-  perspective: 1200px;       /* важно для flip */
-  position: relative;         /* важно для transform */
-  display: block;             /* обязательно */
+  border-radius:18px;
+  perspective:1200px;
+  position:relative;
+  display:block;
   will-change: transform;
 }
 
-.card-inner {
-  width: 100%;
-  height: 100%;
-  border-radius: 18px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transform-style: preserve-3d; /* важно для flip */
-  transition: transform 660ms cubic-bezier(.22,1,.36,1), box-shadow 360ms ease;
+.card-inner{
+  width:100%;
+  height:100%;
+  border-radius:18px;
+  background: var(--card-gradient);
+  color: var(--text);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  text-align:center;
+  padding:16px;
+  transform-style:preserve-3d;
+  transition: transform 1200ms cubic-bezier(.22,1,.36,1), box-shadow 360ms ease;
   box-shadow: 0 8px 30px rgba(0,0,0,.25);
 }
 
-.card-face {
-  position: absolute;
-  inset: 0;
-  border-radius: 18px;
-  backface-visibility: hidden; /* важно для flip */
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 18px;
+.card-face{
+  position:absolute;
+  inset:0;
+  border-radius:18px;
+  backface-visibility:hidden;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:18px;
 }
 
-/* стороны */
-.card-face{position:absolute;inset:0;border-radius:18px;backface-visibility:hidden;display:flex;align-items:center;justify-content:center;padding:18px}
-.front{font-size:28px;font-weight:700;background:linear-gradient(120deg,#1b1b1f,#0f0f12);color:#f6f6f6}
-.back{transform:rotateY(180deg);font-size:15px;line-height:1.45;background:linear-gradient(120deg,#163a2d,#0d1c14);color:#e6efe8;padding:20px}
+.front{
+  background: var(--card-gradient);
+  color: var(--text);
+  font-size:28px;
+  font-weight:700;
+}
 
-/* ANIMATION: shuffle keyframes.
-   Each card will get CSS variables --tx, --ty, --rot and --delay,
-   animation moves to that offset and back (0%->50%->100%). */
+.back{
+  transform: rotateY(180deg);
+  background: var(--card-gradient);
+  color: var(--text);
+  font-size:15px;
+  line-height:1.45;
+  padding:20px;
+}
+
 @keyframes shuffle {
   0%   { transform: translate3d(0,0,0) rotate(0deg) }
   50%  { transform: translate3d(var(--tx,0px), var(--ty,0px), 0) rotate(var(--rot,0deg)) }
   100% { transform: translate3d(0,0,0) rotate(0deg) }
 }
 
-/* класс, который включает анимацию одной фазы */
 .card.shuffle-phase .card-inner{
-  animation: shuffle var(--dur,1200ms) var(--delay,0ms) cubic-bezier(.22,1,.36,1) both;
+  animation: shuffle var(--dur,1800ms) var(--delay,0ms) cubic-bezier(.22,1,.36,1) both;
 }
 
-/* победитель: полноэкранный вид и переворот */
-.overlay{
-  position:fixed; inset:0; background:rgba(0,0,0,.76); z-index:1200; display:flex;align-items:center;justify-content:center;
-}
-.modal{
-  width:min(920px,92vw);
-  max-height:86vh;
-  padding:28px;
-  background: linear-gradient(180deg,#0f1112,#131416);
-  border-radius:14px;
-  color:#fff;
-  display:flex;flex-direction:column;gap:18px;
-  box-shadow:0 30px 80px rgba(0,0,0,.7);
-  transform-style:preserve-3d;
-}
-
-/* крупный текст задания в модалке */
-.modal .task{
-  font-size:20px; line-height:1.4;
-}
-
-/* Кнопки модалки */
-.modal .row{display:flex;gap:12px;justify-content:flex-end}
-.btn-ghost{background:transparent;border:1px solid rgba(255,255,255,.06);color:var(--muted);padding:10px 14px;border-radius:10px;cursor:pointer}
-.btn-confirm{background:var(--accent);color:#000;padding:10px 14px;border-radius:10px;cursor:pointer}
-
-/* История */
-.history-wrap{margin-top:28px}
-.history{max-width:760px;margin:12px auto 80px;padding-left:18px;color:var(--muted);line-height:1.6}
-.history li{padding:8px 0;border-left:3px solid rgba(212,175,55,.07);padding-left:12px}
-
-/* адаптив */
-@media (max-width:720px){
-  .card{height:150px}
-  .btn{padding:12px 20px}
-}
-/* модалка с результатом — красиво, как карточка */
 .overlay{
   position: fixed;
   inset: 0;
@@ -150,7 +122,7 @@ h1{font-size:28px;margin:0 0 6px}
 .modal{
   width: min(900px, 90vw);
   max-height: 80vh;
-  background: linear-gradient(145deg,#1e1e24,#121216);
+  background: linear-gradient(145deg,#1e1f24,#121216);
   border-radius: 16px;
   color: #fff;
   display: flex;
@@ -172,6 +144,26 @@ h1{font-size:28px;margin:0 0 6px}
   justify-content: center;
   margin-top: 16px;
 }
+
+.history-wrap{margin-top:28px}
+.history{
+  max-width:760px;
+  margin:12px auto 80px;
+  padding-left:18px;
+  color:var(--muted);
+  line-height:1.6;
+}
+.history li{
+  padding:8px 0;
+  border-left:3px solid rgba(212,175,55,.07);
+  padding-left:12px;
+}
+
+@media (max-width:720px){
+  .card{height:150px}
+  .btn{padding:12px 20px}
+}
+
 
 
 
