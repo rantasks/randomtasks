@@ -1,3 +1,4 @@
+// script.js — логика перемешивания карточек и модалки
 const cardsRoot = document.getElementById('cards');
 const shuffleBtn = document.getElementById('shuffleBtn');
 const historyOl = document.getElementById('history');
@@ -6,14 +7,14 @@ let cards = [];
 let slots = [];
 let isRunning = false;
 
+// создаём доску и рассчитываем слоты
 function createBoard(){
   cardsRoot.innerHTML = '';
   cards = [];
   slots = [];
 
-  const rect = cardsRoot.getBoundingClientRect();
-  const gap = 20;
-  const cardWidth = 180;
+  const gap = 12;
+  const cardWidth = 140;
   const count = tasks.length;
   const totalWidth = cardsRoot.offsetWidth;
   const startX = (totalWidth - (cardWidth + gap) * count + gap) / 2;
@@ -24,12 +25,7 @@ function createBoard(){
     card.dataset.task = t;
     card.dataset.idx = i;
 
-    card.innerHTML=`
-      <div class="card-inner">
-        <div class="card-face front">${i+1}</div>
-        <div class="card-face back">${t}</div>
-      </div>
-    `;
+    card.innerHTML=`<div class="card-inner"><div class="card-face front">${i+1}</div><div class="card-face back">${t}</div></div>`;
 
     cards.push(card);
     cardsRoot.appendChild(card);
@@ -48,6 +44,7 @@ createBoard();
 
 function sleep(ms){ return new Promise(r=>setTimeout(r,ms)); }
 
+// анимация карты по траектории
 function animateCard(card,path,duration){
   return new Promise(resolve=>{
     let start=null;
@@ -77,6 +74,7 @@ function animateCard(card,path,duration){
   });
 }
 
+// перемешивание карточек с эффектом "трёх стаканов"
 async function shuffleCards(){
   if(isRunning) return;
   if(cards.length===0){ alert('Нет карт'); return; }
@@ -89,16 +87,16 @@ async function shuffleCards(){
     [order[i],order[j]]=[order[j],order[i]];
   }
 
-  const totalPhases = 3;
+  const totalPhases = 4;
   for(let phase=0; phase<totalPhases; phase++){
     const animations=[];
     cards.forEach((card,i)=>{
       const targetSlot=slots[order[i]];
-      const midOffset = 50*(phase+1);
+      const midOffset = 30*(phase+1);
       const mid1={left:(parseFloat(card.style.left)+targetSlot.left)/2, top:-midOffset};
       const mid2={left:targetSlot.left, top:-midOffset/2};
       const path=[ {left:parseFloat(card.style.left),top:parseFloat(card.style.top)}, mid1, mid2, targetSlot ];
-      const duration = 500+phase*200;
+      const duration = 800 + phase*200; // медленнее анимация
       animations.push(animateCard(card,path,duration));
     });
     await Promise.all(animations);
@@ -108,6 +106,7 @@ async function shuffleCards(){
 
   const winnerIndex=Math.floor(Math.random()*cards.length);
   const winnerCard=cards[winnerIndex];
+  cards.forEach(c=>c.classList.remove('highlight-long'));
   winnerCard.classList.add('highlight-long');
   await showTaskModal(winnerCard);
 
@@ -117,6 +116,7 @@ async function shuffleCards(){
 
 shuffleBtn.addEventListener('click',shuffleCards);
 
+// модалка с выбранной карточкой
 function showTaskModal(card){
   return new Promise(resolve=>{
     const overlay=document.createElement('div');
@@ -143,9 +143,7 @@ function showTaskModal(card){
       resolve(true);
     };
 
-    overlay.addEventListener('click',e=>{
-      if(e.target===overlay){ overlay.remove(); resolve(false); }
-    });
+    overlay.addEventListener('click',e=>{ if(e.target===overlay){ overlay.remove(); resolve(false); } });
   });
 }
 
