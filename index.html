@@ -1,22 +1,35 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8">
-  <title>Карточки заданий</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Shuffle Cards — задания</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
+  <main class="wrap">
+    <header>
+      <h1>Карточки заданий</h1>
+      <p class="subtitle">Нажми «Перемешать» — смотри, как карточки плавно перемешиваются, выпадает задача и карта удаляется.</p>
+    </header>
 
-<h1>🎴 Карточки заданий</h1>
-<button id="shuffleBtn">Перемешать</button>
+    <section class="controls">
+      <button id="shuffleBtn" class="btn">Перемешать</button>
+    </section>
 
-<div class="cards" id="cards"></div>
+    <section id="board">
+      <div id="cards" class="cards" aria-live="polite"></div>
+    </section>
 
-<h2>📜 История</h2>
-<ul id="history"></ul>
+    <section class="history-wrap">
+      <h2>История</h2>
+      <ol id="history" class="history"></ol>
+    </section>
+  </main>
 
-<script src="tasks.js"></script>
-<script src="script.js"></script>
-<button class="scroll-btn" id="scrollBtn">↓</button>
+  <!-- Скрипты: tasks.js должен содержать массив tasks = [ ...100 items...] -->
+  <script src="tasks.js"></script>
+  <script src="script.js"></script>
 </body>
 </html>
+
