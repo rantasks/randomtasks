@@ -1,13 +1,19 @@
+// script.js
 const cardsRoot = document.getElementById('cards');
 const shuffleBtn = document.getElementById('shuffleBtn');
 const historyOl = document.getElementById('history');
 
 let cards = [];
 let isRunning = false;
+let slots = []; // позиции ячеек
 
 function createBoard(){
   cardsRoot.innerHTML = '';
   cards = [];
+  slots = [];
+
+  const rect = cardsRoot.getBoundingClientRect();
+  const gap = 20;
 
   tasks.forEach((t, i) => {
     const card = document.createElement('div');
@@ -25,6 +31,17 @@ function createBoard(){
     cards.push(card);
     cardsRoot.appendChild(card);
 
+    // сохраняем слоты
+    const colWidth = (rect.width - gap * (tasks.length-1)) / tasks.length;
+    slots.push({
+      left: i * (colWidth + gap),
+      top: 0
+    });
+
+    card.style.position = 'absolute';
+    card.style.left = `${slots[i].left}px`;
+    card.style.top = `${slots[i].top}px`;
+
     card.addEventListener('click', async ()=>{
       if(isRunning) return;
       await showTaskModal(card);
@@ -34,64 +51,83 @@ function createBoard(){
 
 createBoard();
 
-function randRange(min, max){ return Math.random()*(max-min)+min; }
+function sleep(ms){ return new Promise(r=>setTimeout(r,ms)); }
 
-// Генерация сложных кривых для перемешивания
-function setShuffleVars(card){
-  const tx = `${randRange(-250,250)}px`;
-  const ty = `${randRange(-150,150)}px`;
-  const rot = `${randRange(-45,45)}deg`;
-  const scale = randRange(0.85,1.1);
-  const delay = `${randRange(0,200)}ms`;
+function animateCard(card, path, duration){
+  return new Promise(resolve=>{
+    let start = null;
+    const startPos = {left: parseFloat(card.style.left), top: parseFloat(card.style.top)};
+    const delta = path.map(p => ({x: p.left - startPos.left, y: p.top - startPos.top}));
 
-  card.style.setProperty('--tx', tx);
-  card.style.setProperty('--ty', ty);
-  card.style.setProperty('--rot', rot);
-  card.style.setProperty('--scale', scale);
-  card.style.setProperty('--delay', delay);
-  card.style.setProperty('--dur','900ms');
-}
+    function step(ts){
+      if(!start) start = ts;
+      const t = (ts-start)/duration;
+      if(t >= 1){
+        card.style.left = `${path[path.length-1].left}px`;
+        card.style.top = `${path[path.length-1].top}px`;
+        resolve();
+        return;
+      }
 
-function cssShufflePhase(){
-  return new Promise(resolve => {
-    cards.forEach(c => setShuffleVars(c));
-    void cardsRoot.offsetWidth;
-    cards.forEach(c => c.classList.add('shuffle-phase'));
-    setTimeout(()=>{
-      cards.forEach(c => c.classList.remove('shuffle-phase'));
-      resolve();
-    }, 950);
+      // вычисляем промежуточную точку через все точки path
+      let seg = Math.floor(t*delta.length);
+      if(seg >= delta.length) seg = delta.length-1;
+      const segT = t*delta.length - seg;
+      const x = startPos.left + delta.slice(0,seg).reduce((a,b)=>a+b.x,0) + delta[seg].x*segT;
+      const y = startPos.top + delta.slice(0,seg).reduce((a,b)=>a+b.y,0) + delta[seg].y*segT;
+      card.style.left = `${x}px`;
+      card.style.top = `${y}px`;
+
+      requestAnimationFrame(step);
+    }
+    requestAnimationFrame(step);
   });
 }
 
-function doRealShuffle(){
-  return new Promise(resolve => {
-    const firstRects = cards.map(c => c.getBoundingClientRect());
-    cards.sort(()=>Math.random()-0.5);
-    cards.forEach(c => cardsRoot.appendChild(c));
-    const lastRects = cards.map(c => c.getBoundingClientRect());
+async function shuffleCards(){
+  if(isRunning) return;
+  isRunning = true;
+  shuffleBtn.disabled = true;
 
-    cards.forEach((card,i)=>{
-      const dx = firstRects[i].left - lastRects[i].left;
-      const dy = firstRects[i].top - lastRects[i].top;
-      card.style.transition='transform 0s';
-      card.style.transform=`translate(${dx}px,${dy}px)`;
-      void card.offsetWidth;
-      requestAnimationFrame(()=>{
-        card.style.transition='transform 800ms cubic-bezier(.22,1,.36,1)';
-        card.style.transform='';
-      });
-    });
+  if(cards.length===0){ alert('Нет карт'); isRunning=false; shuffleBtn.disabled=false; return; }
 
-    setTimeout(()=>{
-      cards.forEach(c=>{
-        c.style.transition='';
-        c.style.transform='';
-      });
-      resolve();
-    },850);
+  // генерируем новый порядок случайно
+  const order = [...Array(cards.length).keys()];
+  for(let i=order.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [order[i], order[j]] = [order[j], order[i]];
+  }
+
+  // создаём пути для каждой карты через промежуточные точки
+  const maxOffset = 60;
+  const duration = 1000;
+  const animations = [];
+
+  cards.forEach((card,i)=>{
+    const targetSlot = slots[order[i]];
+    const mid1 = {left: parseFloat(card.style.left), top: parseFloat(card.style.top) - randRange(20,maxOffset)};
+    const mid2 = {left: targetSlot.left, top: targetSlot.top - randRange(20,maxOffset)};
+    animations.push(animateCard(card,[mid1,mid2,targetSlot],duration));
   });
+
+  await Promise.all(animations);
+
+  // обновляем порядок массива карт по слоту
+  cards.sort((a,b)=>order[a.dataset.idx]-order[b.dataset.idx]);
+
+  // выбираем победителя
+  const winnerIndex = Math.floor(Math.random()*cards.length);
+  const winnerCard = cards[winnerIndex];
+  winnerCard.classList.add('highlight-long');
+  await showTaskModal(winnerCard);
+
+  shuffleBtn.disabled = false;
+  isRunning=false;
 }
+
+shuffleBtn.addEventListener('click', shuffleCards);
+
+function randRange(min,max){ return Math.random()*(max-min)+min; }
 
 function showTaskModal(card){
   return new Promise(resolve=>{
@@ -108,10 +144,6 @@ function showTaskModal(card){
     overlay.appendChild(modal);
     document.body.appendChild(overlay);
 
-    // выделение выбранной карты на долго
-    card.classList.add('highlight');
-    setTimeout(()=> card.classList.add('highlight-long'), 50);
-
     document.getElementById('confirmBtn').onclick=()=>{
       const li=document.createElement('li');
       li.textContent=`${historyOl.children.length+1}. ${card.dataset.task}`;
@@ -124,35 +156,10 @@ function showTaskModal(card){
     };
 
     overlay.addEventListener('click', e=>{
-      if(e.target===overlay){ 
-        overlay.remove(); 
-        card.classList.remove('highlight');
-        card.classList.remove('highlight-long');
-        resolve(false); 
-      }
+      if(e.target===overlay){ overlay.remove(); resolve(false); }
     });
   });
 }
-
-shuffleBtn.addEventListener('click', async ()=>{
-  if(isRunning) return;
-  if(cards.length===0){ alert('Карт больше нет — все задания использованы.'); return; }
-  isRunning=true;
-  shuffleBtn.disabled=true;
-
-  // несколько запутанных фаз перемешивания
-  await cssShufflePhase();
-  await cssShufflePhase();
-  await cssShufflePhase();
-  await doRealShuffle();
-
-  const winnerIndex=Math.floor(Math.random()*cards.length);
-  const winnerCard=cards[winnerIndex];
-  await showTaskModal(winnerCard);
-
-  shuffleBtn.disabled=false;
-  isRunning=false;
-});
 
 
 
