@@ -1,47 +1,38 @@
-// script.js — управление анимацией и логикой
-// Требование: tasks.js загружен выше (массив tasks)
-
 const cardsRoot = document.getElementById('cards');
 const shuffleBtn = document.getElementById('shuffleBtn');
 const historyOl = document.getElementById('history');
 
-let cards = []; // массив DOM-элементов карт
+let cards = [];
 let isRunning = false;
 
-// =====================
-// создаём DOM-карты (сначала очищаем, если нужно)
-// =====================
 function createBoard(){
-  // Проверяем, есть ли еще карточки
-  if (cards.length === 0) {
-    tasks.forEach((task, idx) => {
-      const card = document.createElement('div');
-      card.className = 'card';
-      card.dataset.task = task;
+  cardsRoot.innerHTML = '';
+  cards = [];
 
-      const inner = document.createElement('div');
-      inner.className = 'card-inner';
+  tasks.forEach((task, idx) => {
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.dataset.task = task;
 
-      const front = document.createElement('div');
-      front.className = 'card-face front';
-      front.textContent = idx + 1;
+    const inner = document.createElement('div');
+    inner.className = 'card-inner';
 
-      const back = document.createElement('div');
-      back.className = 'card-face back';
-      back.textContent = task;
+    const front = document.createElement('div');
+    front.className = 'card-face front';
+    front.textContent = idx + 1;
 
-      inner.appendChild(front);
-      inner.appendChild(back);
-      card.appendChild(inner);
-      cardsRoot.appendChild(card);
-      cards.push(card);
-    });
-  }
+    const back = document.createElement('div');
+    back.className = 'card-face back';
+    back.textContent = task;
+
+    inner.appendChild(front);
+    inner.appendChild(back);
+    card.appendChild(inner);
+    cardsRoot.appendChild(card);
+    cards.push(card);
+  });
 }
 
-// =====================
-// Функция установки переменных для shuffle
-// =====================
 function setShuffleVars(card){
   const tx = (Math.random()-0.5)*200;
   const ty = (Math.random()-0.5)*200;
@@ -51,28 +42,22 @@ function setShuffleVars(card){
   card.style.setProperty('--rot', rot + 'deg');
 }
 
-// =====================
-// Фаза CSS shuffle
-// =====================
 function cssShufflePhase(){
   return new Promise(resolve => {
     cards.forEach(c => {
       setShuffleVars(c);
-      c.style.setProperty('--dur','1200ms');
+      c.style.setProperty('--dur','1800ms'); // длиннее анимация
     });
-    void cardsRoot.offsetWidth; // триггер перерисовки
+    void cardsRoot.offsetWidth;
     cards.forEach(c => c.classList.add('shuffle-phase'));
 
     setTimeout(()=>{
       cards.forEach(c => c.classList.remove('shuffle-phase'));
       resolve();
-    }, 1300);
+    }, 1900);
   });
 }
 
-// =====================
-// Реальный shuffle массива
-// =====================
 function doRealShuffle(){
   return new Promise(resolve => {
     for(let i=cards.length-1;i>0;i--){
@@ -84,9 +69,6 @@ function doRealShuffle(){
   });
 }
 
-// =====================
-// Модалка с заданием
-// =====================
 function showTaskModal(card){
   return new Promise(resolve => {
     const overlay = document.createElement('div');
@@ -109,9 +91,8 @@ function showTaskModal(card){
       li.textContent = `${historyOl.children.length + 1}. ${card.dataset.task}`;
       historyOl.prepend(li);
 
-      // Удаляем карту
       const idx = cards.indexOf(card);
-      if(idx !== -1) cards.splice(idx, 1);
+      if(idx !== -1) cards.splice(idx,1);
       card.remove();
 
       overlay.remove();
@@ -127,16 +108,12 @@ function showTaskModal(card){
   });
 }
 
-// =====================
-// Shuffle кнопка
-// =====================
 shuffleBtn.addEventListener('click', async () => {
   if(isRunning) return;
   if(cards.length === 0){
     alert('Карт больше нет — все задания использованы.');
-    createBoard(); // восстанавливаем карты, если их нет
+    return;
   }
-
   isRunning = true;
   shuffleBtn.disabled = true;
 
@@ -155,7 +132,6 @@ shuffleBtn.addEventListener('click', async () => {
   isRunning = false;
 });
 
-// Инициализация доски
 createBoard();
 
 
